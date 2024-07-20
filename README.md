@@ -13,7 +13,7 @@ Optimize the lease management process by leveraging advanced technologies to ens
       Automated extraction of key terms, clauses, and dates from lease documents using NER and CNN models. The process involves scanning lease documents, using NER to identify and classify entities such as dates, parties involved, financial terms, and obligations. CNNs assist in processing scanned documents and enhancing the accuracy of text extraction.
 
 **Centralized Database Management**
-•	Description: Storing abstracted lease information in a centralized, secure database for easy access and management. This ensures that all lease data is accessible from a single platform, improving data accuracy and facilitating efficient lease management.
+      Storing abstracted lease information in a centralized, secure database for easy access and management. This ensures that all lease data is accessible from a single platform, improving data accuracy and facilitating efficient lease management.
 
 
 **Getting Started**
