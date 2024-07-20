@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.feature_extraction.text import TfidfVectorizer
 import seaborn as sns
 
 # Sample data creation
@@ -57,10 +58,13 @@ data = pd.read_csv('lease_audits.csv')
 
 # Data Preprocessing
 # Vectorize the text data using TF-IDF
-vectorizer = TfidfVectorizer()
-lease_data_tfidf = vectorizer.fit_transform(data['Historical Lease Data'])
-payment_records_tfidf = vectorizer.fit_transform(data['Payment Records'])
-expense_reports_tfidf = vectorizer.fit_transform(data['Expense Reports'])
+lease_vectorizer = TfidfVectorizer()
+payment_vectorizer = TfidfVectorizer()
+expense_vectorizer = TfidfVectorizer()
+
+lease_data_tfidf = lease_vectorizer.fit_transform(data['Historical Lease Data'])
+payment_records_tfidf = payment_vectorizer.fit_transform(data['Payment Records'])
+expense_reports_tfidf = expense_vectorizer.fit_transform(data['Expense Reports'])
 
 # Combine TF-IDF vectors and convert to dense arrays
 X = np.hstack((lease_data_tfidf.toarray(), payment_records_tfidf.toarray(), expense_reports_tfidf.toarray()))
@@ -135,9 +139,9 @@ importances_op = model_opportunities.feature_importances_
 indices_op = np.argsort(importances_op)[::-1]
 
 # Get feature names from all vectorizers
-lease_features = vectorizer.get_feature_names_out()
-payment_features = vectorizer.get_feature_names_out()
-expense_features = vectorizer.get_feature_names_out()
+lease_features = lease_vectorizer.get_feature_names_out()
+payment_features = payment_vectorizer.get_feature_names_out()
+expense_features = expense_vectorizer.get_feature_names_out()
 
 feature_names_op = np.concatenate([lease_features, payment_features, expense_features])
 
