@@ -1,100 +1,105 @@
+# Case Study: Financial Compliance Monitoring in Real Estate Lease Abstraction
 
-# Explanation
-# Sample Data Creation: The script creates a sample dataset containing financial data, lease terms, regulatory standards, and compliance status. This dataset is saved as financial_compliance.csv.
-# Data Loading and Preprocessing: The script reads the sample data and encodes categorical data.
-# Feature Engineering and Preparation: The script prepares the input features (financial data, lease terms, and regulatory standards) and the output target (compliance status).
-# Model Definition and Training: A Decision Tree model is defined and trained to predict compliance status.
-# Model Evaluation: The model's performance is evaluated using accuracy, confusion matrix, and classification report metrics.
-# Visualization: The results are visualized using a confusion matrix plot and a feature importance plot.
-# Before running the script, ensure you have the necessary libraries installed:
-# pip install pandas numpy matplotlib seaborn scikit-learn
+"""
+Description:
+Monitoring financial transactions to ensure compliance with lease terms and regulatory standards. This involves using ML models to analyze financial data and identify potential compliance issues.
+
+Model: Predictive Analytics - Decision Trees
+
+Data Input: Financial Data, Lease Terms, Regulatory Standards
+
+Prediction: Compliance Status, Anomalies
+
+Recommended Model: Decision Trees for analyzing financial data and ensuring compliance
+
+Customer Value Benefits: Regulatory Compliance, Risk Mitigation
+
+Use Case Implementation:
+By using decision trees to analyze financial data, stakeholders can ensure compliance with lease terms and regulatory standards, identify potential compliance issues, and mitigate risks.
+"""
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, KFold, GridSearchCV
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.preprocessing import StandardScaler
 import seaborn as sns
 
 # Sample data creation
-data = {
-    'Financial Data': np.random.normal(loc=1000, scale=200, size=100),
-    'Lease Terms': np.random.choice(['Term A', 'Term B', 'Term C'], size=100),
-    'Regulatory Standards': np.random.choice(['Standard 1', 'Standard 2', 'Standard 3'], size=100),
-    'Compliance Status': np.random.randint(0, 2, size=100)  # 0: Non-compliant, 1: Compliant
-}
+np.random.seed(42)
+financial_data = np.random.rand(100, 5)  # Dummy financial data
+lease_terms = np.random.randint(1, 5, size=(100, 1))  # Dummy lease terms
+regulatory_standards = np.random.randint(1, 5, size=(100, 1))  # Dummy regulatory standards
+compliance_status = np.random.choice([0, 1], size=100)  # 0: Non-compliant, 1: Compliant
 
 # Create DataFrame
-data = pd.DataFrame(data)
+data = pd.DataFrame(np.hstack((financial_data, lease_terms, regulatory_standards)), columns=[f'Feature_{i}' for i in range(7)])
+data['Compliance Status'] = compliance_status
 
 # Save the sample data to a CSV file
-data.to_csv('financial_compliance.csv', index=False)
+data.to_csv('financial_compliance_monitoring.csv', index=False)
 
 # Load the data
-data = pd.read_csv('financial_compliance.csv')
-
-# Encode categorical data
-from sklearn.preprocessing import LabelEncoder
-label_encoder = LabelEncoder()
-data['Lease Terms'] = label_encoder.fit_transform(data['Lease Terms'])
-data['Regulatory Standards'] = label_encoder.fit_transform(data['Regulatory Standards'])
+data = pd.read_csv('financial_compliance_monitoring.csv')
 
 # Prepare input (X) and output (y)
-X = data[['Financial Data', 'Lease Terms', 'Regulatory Standards']]
+X = data.drop('Compliance Status', axis=1)
 y = data['Compliance Status']
 
-# Split the data
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Standardize the data
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
 
-# Define and train the Decision Tree model
-model = DecisionTreeClassifier(random_state=42)
-model.fit(X_train, y_train)
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
-# Predicting compliance status
-y_pred = model.predict(X_test)
+# Define Decision Tree model
+model = DecisionTreeClassifier()
 
-# Evaluation
+# Define hyperparameters for grid search
+param_grid = {
+    'max_depth': [3, 5, 7, 10],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4]
+}
+
+# Grid search with cross-validation
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+grid_search = GridSearchCV(model, param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
+grid_search.fit(X_train, y_train)
+best_model = grid_search.best_estimator_
+
+# Make predictions
+y_pred = best_model.predict(X_test)
+
+# Evaluate the model
 accuracy = accuracy_score(y_test, y_pred)
 conf_matrix = confusion_matrix(y_test, y_pred)
 class_report = classification_report(y_test, y_pred)
 
+print(f'Best Model: {best_model}')
 print(f'Accuracy: {accuracy}')
-print('Confusion Matrix:')
-print(conf_matrix)
-print('Classification Report:')
-print(class_report)
+print(f'Confusion Matrix:\n{conf_matrix}')
+print(f'Classification Report:\n{class_report}')
 
-# Visualizing the results
-def plot_confusion_matrix(cm, classes, title='Confusion Matrix', cmap=plt.cm.Blues):
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
-    fmt = 'd'
-    thresh = cm.max() / 2
-    for i, j in np.ndindex(cm.shape):
-        plt.text(j, i, format(cm[i, j], fmt),
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    plt.tight_layout()
-
+# Visualizing the confusion matrix
 plt.figure(figsize=(10, 7))
-plot_confusion_matrix(conf_matrix, classes=['Non-compliant', 'Compliant'])
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=['Non-compliant', 'Compliant'], yticklabels=['Non-compliant', 'Compliant'])
+plt.title('Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
 plt.show()
 
 # Feature Importance
-importances = model.feature_importances_
+importances = best_model.feature_importances_
 indices = np.argsort(importances)[::-1]
-features = X.columns
+feature_names = [f'Feature_{i}' for i in range(7)]
 
 plt.figure(figsize=(12, 6))
 plt.title("Feature Importances")
-plt.bar(range(X.shape[1]), importances[indices], align="center")
-plt.xticks(range(X.shape[1]), [features[i] for i in indices])
-plt.xlim([-1, X.shape[1]])
+plt.bar(range(len(feature_names)), importances[indices], align="center")
+plt.xticks(range(len(feature_names)), [feature_names[i] for i in indices], rotation=90)
+plt.xlim([-1, len(feature_names)])
 plt.show()
